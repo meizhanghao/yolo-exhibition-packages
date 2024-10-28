@@ -28,4 +28,7 @@ coverage
 *.sw?
 
 *.tsbuildinfo
-.venv
+.venv/
+
+datasets/
+PyQt-Fluent-Widgets/
