@@ -3,10 +3,9 @@ import time
 import cv2
 import numpy as np
 import torch
-from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtCore import QThread, pyqtSignal, Qt
+from PyQt5.QtGui import QPixmap, QImage
 from ultralytics import YOLO
-from collections import defaultdict
 import os
 import utils.draw_boxes as Boxes
 import utils.statistics_classes as Statistics
@@ -16,6 +15,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 np.set_printoptions(suppress=True)
 
+IMG_FORMATS = ['bmp', 'dng', 'jpeg', 'jpg', 'mpo', 'png', 'tif', 'tiff', 'webp']  # include image suffixes
+VID_FORMATS = ['asf', 'avi', 'gif', 'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'wmv']  # include video suffixes
 
 class Worker(QThread):
     send_img = pyqtSignal(np.ndarray)  # 检测结果图像
@@ -42,7 +43,10 @@ class Worker(QThread):
             if self.source is None:
                 print('请上传文件')
                 return
-            self.detect_video(video_path=self.source, save_path='')
+            if self.source.split('.')[-1].lower() in IMG_FORMATS:
+                self.detect_image(self.source)
+            elif self.source.split('.')[-1].lower() in VID_FORMATS:
+                self.detect_video(video_path=self.source, save_path='')
         except Exception as e:
             self.send_msg.emit('%s' % e)
 
@@ -68,8 +72,30 @@ class Worker(QThread):
 
     def detect_image(self, images):
         model = self.init_model(self.model_path)
-        results = model.predict(images)
-        return results
+        names = model.module.names if hasattr(model, 'module') else model.names  # 分类信息
+        try:
+            conf = self.conf if self.conf else 0.3
+            iou = self.iou if self.iou else 0.7
+            classes = self.classes if self.classes else None
+
+            results = model.predict(images, conf=conf, iou=iou, classes=classes, stream=True)
+            for i, result in enumerate(results):
+                frame = result.plot()
+                classes = Statistics.statistics_classes(results, names)
+
+                self.send_img.emit(frame if isinstance(frame, np.ndarray) else frame[0])
+                self.send_statistic.emit(classes)
+                # if isinstance(images, list):
+                #     Boxes.draw_boxes(frame, results)
+                #     classes = Statistics.statistics_classes(results, names)
+                #
+                #     self.send_img.emit(frame if isinstance(frame, np.ndarray) else frame[0])
+                #     self.send_statistic.emit(classes)
+                # elif isinstance(images, str): # 单张照片
+                #     image = cv2.imread(images)
+        except Exception as e:
+            print(e)
+        # return results
 
     def detect_video(self, video_path, save_path):
         cap = cv2.VideoCapture(video_path)
@@ -80,6 +106,8 @@ class Worker(QThread):
             fps = 20.0  # 如果无法获取帧率，则设置为默认值
 
         model = self.init_model(self.model_path)
+        names = model.module.names if hasattr(model, 'module') else model.names  # 分类信息
+
         video_frame = 0
         average_fps = 0.0
         try:
@@ -93,8 +121,6 @@ class Worker(QThread):
                     iou = self.iou if self.iou else 0.7
                     classes = self.classes if self.classes else None
 
-                    names = model.module.names if hasattr(model, 'module') else model.names  # 分类信息
-
                     results = model.predict(frame, conf=conf, iou=iou, classes=classes)  # 检测
 
                     end = time.time()
@@ -105,10 +131,11 @@ class Worker(QThread):
                     print('当前帧：{}'.format(video_frame))
                     print("平均帧率: %.1f" % (average_fps / video_frame))
 
-                    Boxes.draw_boxes(frame, results)
+                    # Boxes.draw_boxes(frame, results)
                     classes = Statistics.statistics_classes(results, names)
+                    annotation_frame = results[0].plot(font_size=10)
 
-                    self.send_img.emit(frame if isinstance(frame, np.ndarray) else frame[0])
+                    self.send_img.emit(annotation_frame if isinstance(annotation_frame, np.ndarray) else annotation_frame[0])
                     self.send_statistic.emit(classes)
 
                     if cv2.waitKey(1) & 0xFF == ord("q"):

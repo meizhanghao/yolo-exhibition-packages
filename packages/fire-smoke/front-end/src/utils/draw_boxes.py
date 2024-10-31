@@ -1,7 +1,7 @@
 import cv2
 
 
-def draw_boxes(img, results, rectangle_thickness=2, text_thickness=1):
+def draw_boxes(img, results, rectangle_thickness=2, text_thickness=2):
     colors = [(89, 161, 197), (57, 76, 139), (19, 222, 24), (186, 55, 2), (167, 146, 11), (190, 76, 98), (139, 71, 93),
               (84, 139, 84)]
     for result in results:
@@ -18,7 +18,7 @@ def draw_boxes(img, results, rectangle_thickness=2, text_thickness=1):
                         f"{result.names[int(box.cls[0])]} {round(conf.item(), 1)}",
                         (int(box.xyxy[0][0]), int(box.xyxy[0][1]) - 10),
                         cv2.FONT_HERSHEY_PLAIN,
-                        1,
+                        2,
                         color,
                         text_thickness)
     return img, results

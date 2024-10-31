@@ -155,7 +155,8 @@ def load_wights():
     current_file_path = os.path.abspath(__file__)
     current_dir_path = os.path.dirname(current_file_path)  # src 目录
     weight_dir = os.path.join(current_dir_path, 'weights')
-    filenames = {file: os.path.join(weight_dir, file) for file in os.listdir(weight_dir) if file != ''}
+    filenames = {file: os.path.join(weight_dir, file) for file in os.listdir(weight_dir) if
+                 ((file != '') & (file.split('.')[-1].lower() in ['pt']))}
     return filenames
 
 

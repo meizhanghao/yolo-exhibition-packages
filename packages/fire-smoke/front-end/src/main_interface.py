@@ -7,6 +7,8 @@ from PyQt5.QtGui import QImage, QPixmap, QColor
 from PyQt5.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFileDialog, QListWidget, QWidget
 from qfluentwidgets import CardWidget, BodyLabel, DisplayLabel, TitleLabel, StrongBodyLabel, ComboBox, SubtitleLabel, \
     Slider, PrimaryPushButton, FluentIcon, CheckBox, SingleDirectionScrollArea
+from scipy.stats import logser
+
 from datasets import load_wights
 from setting import names
 from utils.ui import removeAllWidgetFromLayout
@@ -20,6 +22,7 @@ class MainInterface(QFrame):
         self.worker = worker
         self.weight_paths = load_wights()
         self.all_classes = names
+        self.logs = ['设备已经初始化，可以进行目标检测任务']
         # 水平布局，用于放置左右两个 QLabel
         self.layout = QVBoxLayout(self)
 
@@ -81,6 +84,8 @@ class MainInterface(QFrame):
         hbox_video = QHBoxLayout()
         self.layout.addLayout(hbox_video)
 
+        # self.layout.setStretchFactor(hbox_video, 3)
+
         cardWidget1 = CardWidget()
         hbox_video.addWidget(cardWidget1)
         cardWidget1_vbox = QVBoxLayout(cardWidget1)
@@ -128,8 +133,6 @@ class MainInterface(QFrame):
 
         scrollArea = SingleDirectionScrollArea(orient=Qt.Vertical)
         scrollArea.setStyleSheet("QScrollArea{background: transparent; border: none}")
-        # scrollArea.resize(200, 200)
-        # scrollArea.setMinimumHeight(200)
         scrollArea.setWidget(view)
 
         cardWidget2_vbox.addLayout(cardWidget2_hbox1)
@@ -150,7 +153,7 @@ class MainInterface(QFrame):
         slider1_value_min = QLabel('0%')
         slider1_value_max = QLabel('100%')
         self.slider1 = Slider(Qt.Horizontal)
-        # slider1.setFixedWidth(200)
+
         # 设置取值范围和当前值
         self.slider1.setRange(0, 100)
         self.slider1.setValue(30)
@@ -170,7 +173,7 @@ class MainInterface(QFrame):
         slider2_value_min = QLabel('0%')
         slider2_value_max = QLabel('100%')
         self.slider2 = Slider(Qt.Horizontal)
-        # slider1.setFixedWidth(200)
+
         # 设置取值范围和当前值
         self.slider2.setRange(0, 100)
         self.slider2.setValue(70)
@@ -226,7 +229,6 @@ class MainInterface(QFrame):
         cardWidget3_vbox.addWidget(result_details_label)
 
         self.resultWidget = QListWidget(cardWidget3)
-        # border:1px solid #009faa;
         self.resultWidget.setStyleSheet(
             "QListWidget{background-color: rgba(12, 28, 77, 0);border-radius:0px;font-size: 16px;}")
         cardWidget3_vbox.addWidget(self.resultWidget)
@@ -235,6 +237,23 @@ class MainInterface(QFrame):
         # self.exit_button.clicked.connect(self.exit_application)
         # self.exit_button.setFixedSize(120, 30)
 
+        # cardWidget4 = QWidget()
+        # cardWidget4.setStyleSheet("QWidget{background: transparent}")
+        # self.cardWidget4_vbox1 = QVBoxLayout(cardWidget4)
+        # self.cardWidget4_vbox1.setAlignment(Qt.AlignTop)
+
+        self.logs_widget = QListWidget()
+        self.logs_widget.setStyleSheet("QListWidget{background: transparent; border: none}")
+        self.logs_widget.addItems(self.logs)
+        self.logs_widget.resize(20000, 50)
+        self.logs_widget.setMaximumHeight(50)
+
+        # scrollArea1 = SingleDirectionScrollArea(orient=Qt.Vertical)
+        # scrollArea1.setStyleSheet("QScrollArea{background: transparent; border: none}")
+        # scrollArea1.setWidget(self.logs_widget)
+        # scrollArea1.setMaximumHeight(50)
+        self.layout.addWidget(self.logs_widget)
+
         self.initWidget()
         self.add_event_listener()
 
@@ -242,6 +261,14 @@ class MainInterface(QFrame):
         self.worker.send_img.connect(lambda x: self.show_image(x, self.result_label))
         self.worker.send_raw.connect(lambda x: self.show_image(x, self.result_label))
         self.worker.send_statistic.connect(lambda x: self.show_statistic(x, self.resultWidget))
+
+    def set_logs(self, logs):
+        if isinstance(logs, list):
+            self.logs = self.logs + logs
+        else:
+            self.logs.append(logs)
+        self.logs_widget.clear()
+        self.logs_widget.addItems(self.logs)
 
     @staticmethod
     def init_checkbox_list(all_classes, layout):
@@ -332,6 +359,8 @@ class MainInterface(QFrame):
         if not image_path:
             print('沒有找到文件')
         self.worker.set_source(image_path)
+        log = '您已经打开文件：' + image_path
+        self.set_logs([log])
 
     def open_file(self, args):
         image_path, _ = QFileDialog.getOpenFileName(self, "选择图片文件", "", args)
@@ -345,6 +374,8 @@ class MainInterface(QFrame):
         if not video_path:
             print('沒有找到文件')
         self.worker.set_source(video_path)
+        log = '您已经打开文件：' + video_path
+        self.set_logs([log])
 
     def show_detected_objects(self):
         if self.current_results:
