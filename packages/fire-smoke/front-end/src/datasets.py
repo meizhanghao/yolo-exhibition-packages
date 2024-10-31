@@ -44,11 +44,13 @@ def letterbox(im, new_shape=(640, 640), color=(114, 114, 114), auto=True, scaleF
     im = cv2.copyMakeBorder(im, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # add border
     return im, ratio, (dw, dh)
 
+
 def make_divisible(x, divisor):
     # Returns nearest x divisible by divisor
     if isinstance(divisor, torch.Tensor):
         divisor = int(divisor.max())  # to int
     return math.ceil(x / divisor) * divisor
+
 
 def check_img_size(imgsz, s=32, floor=0):
     # Verify image size is a multiple of stride s in each dimension
@@ -59,6 +61,7 @@ def check_img_size(imgsz, s=32, floor=0):
     if new_size != imgsz:
         LOGGER.warning(f'WARNING: --img-size {imgsz} must be multiple of max stride {s}, updating to {new_size}')
     return new_size
+
 
 class LoadDataSets:
     def __init__(self, path, img_size=640, stride=32, auto=True):
@@ -113,7 +116,7 @@ class LoadDataSets:
         path = self.files[self.count]
 
         if self.video_flag[self.count]:
-            self.mode = 'video' # Read video
+            self.mode = 'video'  # Read video
             ret_val, img0 = self.cap.read()
             while not ret_val:
                 self.count += 1
@@ -146,3 +149,16 @@ class LoadDataSets:
 
     def __len__(self):
         return self.nf  # number of files
+
+
+def load_wights():
+    current_file_path = os.path.abspath(__file__)
+    current_dir_path = os.path.dirname(current_file_path)  # src 目录
+    weight_dir = os.path.join(current_dir_path, 'weights')
+    filenames = {file: os.path.join(weight_dir, file) for file in os.listdir(weight_dir) if file != ''}
+    return filenames
+
+
+if __name__ == '__main__':
+    filenames = load_wights()
+    print(filenames)
