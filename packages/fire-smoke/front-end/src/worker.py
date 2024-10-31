@@ -111,7 +111,7 @@ class Worker(QThread):
                     self.send_img.emit(frame if isinstance(frame, np.ndarray) else frame[0])
                     self.send_statistic.emit(classes)
 
-                    if 0xFF == ord("q"):
+                    if cv2.waitKey(1) & 0xFF == ord("q"):
                         break
                 else:
                     print('结束了')
