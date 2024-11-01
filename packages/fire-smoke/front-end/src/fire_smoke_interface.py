@@ -6,19 +6,20 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QPixmap, QColor
 from PyQt5.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFileDialog, QListWidget, QWidget
 from qfluentwidgets import CardWidget, BodyLabel, DisplayLabel, TitleLabel, StrongBodyLabel, ComboBox, SubtitleLabel, \
-    Slider, PrimaryPushButton, FluentIcon, CheckBox, SingleDirectionScrollArea
-from scipy.stats import logser
-
+    Slider, PrimaryPushButton, FluentIcon, CheckBox, SingleDirectionScrollArea, ScrollArea, PushButton, SimpleCardWidget
 from datasets import load_wights
 from setting import names
 from utils.ui import removeAllWidgetFromLayout
+from wrapper_interface import WrapperInterface
 
 
-class MainInterface(QFrame):
-    detect_target_label = '检测钢材表面是否出现龟裂|划痕|杂质|轧制氧化层|点蚀|斑块缺陷'
+class FireSmokeInterface(ScrollArea):
+    detect_target_label = '检测图像是否存在火焰烟雾'
 
-    def __init__(self, parent=None, worker=None):
-        super(MainInterface, self).__init__(parent)
+    def __init__(self, text: str, parent=None, worker=None):
+        super().__init__(parent=parent)
+        # self.label = SubtitleLabel(text, self)
+        self.setObjectName('fire_smoke_detect')
         self.worker = worker
         self.weight_paths = load_wights()
         self.all_classes = names
@@ -37,7 +38,7 @@ class MainInterface(QFrame):
         font_h4.setBold(False)
 
         hbox_video_labels = QHBoxLayout(self)
-        label1 = QLabel('钢板表面缺陷检测')
+        label1 = QLabel('火焰烟雾陷检测')
         label1.setFont(font)
         hbox_video_labels.addWidget(label1)
 
@@ -53,24 +54,24 @@ class MainInterface(QFrame):
         hbox_weight.addStretch(1)
 
         # 添加图片检测按钮
-        self.image_detect_button = QPushButton("💾图片检测")
+        self.image_detect_button = PushButton("💾图片检测")
         self.image_detect_button.clicked.connect(self.handler_open_image)
         self.image_detect_button.setEnabled(False)
-        self.image_detect_button.setFixedSize(120, 30)
+        # self.image_detect_button.setFixedSize(120, 30)
         hbox_weight.addWidget(self.image_detect_button)
 
         # 添加视频检测按钮
-        self.video_detect_button = QPushButton("🎬视频检测")
+        self.video_detect_button = PushButton("🎬视频检测")
         self.video_detect_button.clicked.connect(self.handler_open_video)
         self.video_detect_button.setEnabled(False)
-        self.video_detect_button.setFixedSize(120, 30)
+        # self.video_detect_button.setFixedSize(120, 30)
         hbox_weight.addWidget(self.video_detect_button)
 
         # 添加显示检测物体按钮
-        self.display_objects_button = QPushButton("🔍显示检测物体")
+        self.display_objects_button = PushButton("🔍显示检测物体")
         self.display_objects_button.clicked.connect(self.show_detected_objects)
         self.display_objects_button.setEnabled(False)
-        self.display_objects_button.setFixedSize(120, 30)
+        # self.display_objects_button.setFixedSize(120, 30)
         hbox_weight.addWidget(self.display_objects_button)
 
         comboBox = ComboBox()
@@ -86,7 +87,7 @@ class MainInterface(QFrame):
 
         # self.layout.setStretchFactor(hbox_video, 3)
 
-        cardWidget1 = CardWidget()
+        cardWidget1 = SimpleCardWidget()
         hbox_video.addWidget(cardWidget1)
         cardWidget1_vbox = QVBoxLayout(cardWidget1)
         cardWidget1_hbox1 = QHBoxLayout()
@@ -98,10 +99,10 @@ class MainInterface(QFrame):
         vbox_right1_layout = QVBoxLayout()
         hbox_video.addLayout(vbox_right1_layout)
 
-        cardWidget2 = CardWidget()
+        cardWidget2 = SimpleCardWidget()
         cardWidget2.setMinimumSize(280, 250)  # 设置大小
 
-        cardWidget3 = CardWidget()
+        cardWidget3 = SimpleCardWidget()
         cardWidget3.setMinimumSize(280, 250)  # 设置大小
         vbox_right1_layout.addWidget(cardWidget2)
         vbox_right1_layout.addWidget(cardWidget3)
@@ -254,7 +255,7 @@ class MainInterface(QFrame):
         # scrollArea1.setMaximumHeight(50)
         self.layout.addWidget(self.logs_widget)
 
-        self.initWidget()
+        self.init_widget()
         self.add_event_listener()
 
     def add_event_listener(self):
@@ -275,7 +276,7 @@ class MainInterface(QFrame):
         removeAllWidgetFromLayout(layout)
         checkbox_list = []
         for k, v in all_classes.items():
-            if k >5:
+            if k > 5:
                 continue
             checkbox = CheckBox(str(v))
             checkbox.setTristate(True)
@@ -311,8 +312,9 @@ class MainInterface(QFrame):
         except Exception as e:
             print(repr(e))
 
-    def initWidget(self):
-        self.layout.setContentsMargins(0, 0, 0, 0)
+    def init_widget(self):
+        self.layout.setContentsMargins(20, 18, 20, 20)
+        self.setStyleSheet("QScrollArea{background: transparent; border: none}")
 
     def change_val(self, value, flag):
         if flag == 'conf':

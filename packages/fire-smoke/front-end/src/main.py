@@ -6,30 +6,40 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWid
     QMessageBox, QFileDialog
 from PyQt5.QtGui import QImage, QPixmap, QIcon
 import cv2
+from qfluentwidgets import FluentIcon, FluentWindow
 from qframelesswindow import FramelessWindow, StandardTitleBar
 from worker import Worker
-from main_interface import MainInterface
+
+from steel_plate_interface import SteelPlateInterface
+from fire_smoke_interface import FireSmokeInterface
 
 
-class MainWindow(FramelessWindow):
+class MainWindow(FluentWindow):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.worker = Worker()
 
 
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(20, 40, 20, 20)
-        self.mainInterface = MainInterface(parent=self, worker=self.worker)
-        self.layout.addWidget(self.mainInterface)
+        # self.layout = QVBoxLayout(self)
+        # self.layout.setContentsMargins(20, 40, 20, 20)
+        self.steelPlateInterface = SteelPlateInterface('钢材表面缺陷检测',parent=self, worker=self.worker)
+        self.fireSmokeInterface = FireSmokeInterface('火焰烟雾陷检测',parent=self, worker=self.worker)
+        # self.layout.addWidget(self.mainInterface)
         self.current_results = None
+
+        self.init_navigation()
         self.init_window()
+
+    def init_navigation(self):
+        self.addSubInterface(self.steelPlateInterface, FluentIcon.HOME, '钢材表面缺陷检测')
+        self.addSubInterface(self.fireSmokeInterface, FluentIcon.FLAG, '火焰烟雾陷检测')
 
     def init_window(self):
         self.resize(1080, 784)
         self.setTitleBar(StandardTitleBar(self))
         self.titleBar.raise_()
         self.setWindowIcon(QIcon('logo.png'))
-        self.setWindowTitle("钢板表面缺陷检测")
+        self.setWindowTitle("目标检测")
 
         # 居中布局
         desktop = QApplication.desktop().availableGeometry()
