@@ -35,3 +35,5 @@ PyQt-Fluent-Widgets/
 MOT16-02.mp4
 MOT16-03.mp4
 test.mp4
+
+__pycache__/
